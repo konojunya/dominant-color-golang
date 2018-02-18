@@ -53,7 +53,7 @@ func output(c color.RGBA) {
 		panic(err)
 	}
 
-	fmt.Println("Done!")
+	fmt.Printf("Dominant Color is rgb(%v,%v,%v)", c.R, c.G, c.B)
 }
 
 func getDominantColor(img image.Image) color.RGBA {
