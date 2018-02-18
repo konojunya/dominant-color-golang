@@ -4,38 +4,59 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/jpeg"
 	_ "image/jpeg"
-	"log"
 	"os"
 
 	"github.com/nfnt/resize"
 )
 
-type DominantColor struct {
-	Red   uint8
-	Green uint8
-	Blue  uint8
-}
-
 func main() {
 	file, err := os.Open("sample.jpg")
 	defer file.Close()
 	if err != nil {
-		log.Fatalf("open err: %v", err)
+		panic(err)
 	}
 	img, _, err := image.Decode(file)
 	if err != nil {
-		log.Fatalf("decode err: %v", err)
+		panic(err)
 	}
 
 	img = resize.Resize(36, 0, img, resize.Lanczos3)
-	rgba := getDominantColor(img)
+	rgb := getDominantColor(img)
 
-	fmt.Println(rgba)
-
+	output(rgb)
 }
 
-func getDominantColor(img image.Image) DominantColor {
+func output(c color.RGBA) {
+	var x, y int
+	w := 200
+	h := 100
+
+	img := image.NewRGBA(image.Rect(x, y, w, h))
+	rect := img.Rect
+
+	// X, Yに塗っていく
+	for h := rect.Min.Y; h < rect.Max.Y; h++ {
+		for v := rect.Min.X; v < rect.Max.X; v++ {
+			img.Set(v, h, c)
+		}
+	}
+
+	file, err := os.Create("output.jpg")
+	defer file.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	if err = jpeg.Encode(file, img, &jpeg.Options{Quality: 100}); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Done!")
+}
+
+func getDominantColor(img image.Image) color.RGBA {
 	var r, g, b, count float64
 
 	rect := img.Bounds()
@@ -49,9 +70,9 @@ func getDominantColor(img image.Image) DominantColor {
 		}
 	}
 
-	return DominantColor{
-		Red:   uint8(r / count),
-		Green: uint8(g / count),
-		Blue:  uint8(b / count),
+	return color.RGBA{
+		R: uint8(r / count),
+		G: uint8(g / count),
+		B: uint8(b / count),
 	}
 }
